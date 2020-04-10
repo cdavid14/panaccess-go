@@ -55,6 +55,11 @@ type ApiResponse struct {
 	Answer           interface{} `json:"answer,omitempty"`
 }
 
+type LoggedInResponse struct {
+	Success bool `json:"success"`
+	Answer  bool `json:"answer"`
+}
+
 //KeyValuePair necessary to do an set function
 type KeyValuePair struct {
 	Key   string `json:"key"`
@@ -86,14 +91,37 @@ func (p *Panaccess) Login() error {
 }
 
 //Loggedin in system
-func (p *Panaccess) Loggedin() (bool, error) {
-	//Call Panaccess login
-	form := url.Values{}
-	resp, err := p.Call("loggedIn", &form)
-	if err != nil {
-		return false, err
+func (pan *Panaccess) Loggedin() (bool, error) {
+	// //Call Panaccess login
+	// form := url.Values{}
+	// resp, err := p.Call("loggedIn", &form)
+	// if err != nil {
+	// 	return false, err
+	// }
+	// //Set SessionID
+	// ret := ApiResponse{}
+	// json.NewDecoder(resp.Body).Decode(&ret)
+	// return ret.Answer.(bool), nil
+	//Function Call
+	var resp *http.Response
+	var err error
+	serverOk := false
+	params := url.Values{}
+	params.Add("sessionId", pan.SessionID)
+	for _, server := range pan.Servers {
+		resp, err = pan.HTTP.PostForm(
+			fmt.Sprintf("%s?f=loggedIn&requestMode=function", server),
+			params,
+		)
+		if err == nil {
+			serverOk = true
+			break
+		}
 	}
-	//Set SessionID
+	if !serverOk {
+		return false, errors.New("Connection Timeout")
+	}
+
 	ret := ApiResponse{}
 	json.NewDecoder(resp.Body).Decode(&ret)
 	return ret.Answer.(bool), nil
@@ -117,15 +145,18 @@ func (pan *Panaccess) Call(funcName string, parameters *url.Values) (*http.Respo
 	if pan.SessionID != "" && funcName != "login" {
 		(*parameters).Add("sessionId", pan.SessionID)
 	}
-	loggedIn, err := pan.Loggedin()
-	if err != nil {
-		return nil, err
-	}
-	if !loggedIn {
-		return nil, errors.New("Not logged-in")
+	if funcName != "login" {
+		loggedIn, err := pan.Loggedin()
+		if err != nil {
+			return nil, err
+		}
+		if !loggedIn {
+			return nil, errors.New("Not logged-in")
+		}
 	}
 	//Function Call
 	var resp *http.Response
+	var err error
 	serverOk := false
 	for _, server := range pan.Servers {
 		resp, err = pan.HTTP.PostForm(
@@ -148,12 +179,14 @@ func (pan *Panaccess) CallWithFilters(funcName string, parameters *url.Values, f
 	if pan.SessionID != "" && funcName != "login" {
 		(*parameters).Add("sessionId", pan.SessionID)
 	}
-	loggedIn, err := pan.Loggedin()
-	if err != nil {
-		return nil, err
-	}
-	if !loggedIn {
-		return nil, errors.New("Not logged-in")
+	if funcName != "login" {
+		loggedIn, err := pan.Loggedin()
+		if err != nil {
+			return nil, err
+		}
+		if !loggedIn {
+			return nil, errors.New("Not logged-in")
+		}
 	}
 	//Filters generator
 	filter := Filters{
