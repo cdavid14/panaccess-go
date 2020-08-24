@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"sort"
 )
@@ -19,11 +20,79 @@ type Order struct {
 	ProductID          int      `json:"productId,omitempty"`
 	ProductName        string   `json:"productName,omitempty"`
 	ActivationTime     string   `json:"activationTime"`
+	SubscriberCode     int      `json:"code,omitempty"`
 	ExpiryTime         string   `json:"expiryTime"`
 	Smartcards         []string `json:"smartcards"`
 	Disabled           bool     `json:"disabled"`
 	DisabledBySystem   bool     `json:"disabledBySystem"`
 	DisabledByOperator bool     `json:"disabledByOperator"`
+}
+
+func (order *Order) Get(pan *Panaccess, params *url.Values) ([]Order, error) {
+	//Everything has a limit
+	if (*params).Get("limit") == "" {
+		(*params).Add("limit", "1000")
+	}
+	//Call Function
+	resp, err := pan.Call(
+		"getListOfOrders",
+		params)
+	if err != nil {
+		return nil, err
+	}
+	//Decode Response to Struct
+	ret := ApiResponse{}
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(bodyBytes, &ret)
+	if err != nil {
+		return nil, err
+	}
+	//Retrieve all rows and parse as a slice of Subscriber
+	var rows GetOrdersFilterResponse
+	bodyBytes, err = json.Marshal(ret.Answer)
+	err = json.Unmarshal(bodyBytes, &rows)
+	if err != nil {
+		return nil, err
+	}
+	return rows.OrderEntries, nil
+}
+
+func (order *Order) GetWithFilters(pan *Panaccess, params *url.Values, groupOp string, filters []Rule) ([]Order, error) {
+	//Everything has a limit
+	if (*params).Get("limit") == "" {
+		(*params).Add("limit", "1000")
+	}
+	//Call Function
+	resp, err := pan.CallWithFilters(
+		"getListOfOrders",
+		params,
+		groupOp,
+		filters,
+	)
+	if err != nil {
+		return nil, err
+	}
+	//Decode Response to Struct
+	ret := ApiResponse{}
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(bodyBytes, &ret)
+	if err != nil {
+		return nil, err
+	}
+	//Retrieve all rows and parse as a slice of Subscriber
+	var rows GetOrdersFilterResponse
+	bodyBytes, err = json.Marshal(ret.Answer)
+	err = json.Unmarshal(bodyBytes, &rows)
+	if err != nil {
+		return nil, err
+	}
+	return rows.OrderEntries, nil
 }
 
 func (order *Order) AddToSubscriber(pan *Panaccess, params *url.Values) error {
@@ -76,7 +145,6 @@ func (order *Order) AddToSubscriber(pan *Panaccess, params *url.Values) error {
 			params.Add("smartcards", card.SN)
 		}
 	}
-	fmt.Println(params)
 	//Send data to make new subscriber
 	resp, err := pan.Call(
 		"addFlexibleOrderToSubscriber",

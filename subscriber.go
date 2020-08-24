@@ -23,6 +23,8 @@ type Subscriber struct {
 	CAF            interface{} `json:"caf"`
 	Smartcards     []string    `json:"smartcards"`
 	Comment        string      `json:"comment"`
+	Supervisor     string      `json:"supervisor"`
+	TechNotes      string      `json:"technicalNotes"`
 	LastExpiryTime string      `json:"lastExpiryTime"`
 	CreatedAt      string      `json:"created"`
 }
@@ -58,6 +60,20 @@ func (sub *Subscriber) Get(pan *Panaccess, params *url.Values) ([]Subscriber, er
 		return nil, err
 	}
 	return rows.SubscriberEntries, nil
+}
+
+//Delete a subscriber
+func (sub *Subscriber) Delete(pan *Panaccess) error {
+	params := url.Values{}
+	params.Add("code", sub.SubscriberCode)
+	//Call Function
+	_, err := pan.Call(
+		"deleteSubscriber",
+		&params)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 //GetWithFilters a list of subscribers with specific filters
