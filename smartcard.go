@@ -7,16 +7,19 @@ import (
 	"net/url"
 )
 
+//GetListOfSmartcardsResponse from panaccess
 type GetListOfSmartcardsResponse struct {
 	Count            int         `json:"count"`
 	SmartcardEntries []Smartcard `json:"smartcardEntries"`
 }
 
+//GetUnusedSmartcardsResponse from panaccess
 type GetUnusedSmartcardsResponse struct {
 	Success bool        `json:"success"`
 	Answer  []Smartcard `json:"answer"`
 }
 
+//Smartcard class representation from panaccess
 type Smartcard struct {
 	SN          string   `json:"sn"`
 	PIN         string   `json:"pin"`
@@ -28,11 +31,13 @@ type Smartcard struct {
 	Products    []string `json:"products"`
 }
 
+//GetSmartcardOrdersResponse from panaccess
 type GetSmartcardOrdersResponse struct {
 	Success bool    `json:"success"`
 	Answer  []Order `json:"answer"`
 }
 
+//Get smartcard from panaccess
 func (card *Smartcard) Get(pan *Panaccess, params *url.Values) ([]Smartcard, error) {
 	//Everything has a limit
 	if (*params).Get("limit") == "" {
@@ -47,7 +52,7 @@ func (card *Smartcard) Get(pan *Panaccess, params *url.Values) ([]Smartcard, err
 		return nil, err
 	}
 	//Decode Response to Struct
-	ret := ApiResponse{}
+	ret := APIResponse{}
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -66,6 +71,7 @@ func (card *Smartcard) Get(pan *Panaccess, params *url.Values) ([]Smartcard, err
 	return rows.SmartcardEntries, nil
 }
 
+//GetWithFilter smartcard from panaccess
 func (card *Smartcard) GetWithFilter(pan *Panaccess, params *url.Values, groupOp string, filters []Rule) ([]Smartcard, error) {
 	//Everything has a limit
 	if (*params).Get("limit") == "" {
@@ -82,7 +88,7 @@ func (card *Smartcard) GetWithFilter(pan *Panaccess, params *url.Values, groupOp
 		return nil, err
 	}
 	//Decode Response to Struct
-	ret := ApiResponse{}
+	ret := APIResponse{}
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -101,6 +107,7 @@ func (card *Smartcard) GetWithFilter(pan *Panaccess, params *url.Values, groupOp
 	return rows.SmartcardEntries, nil
 }
 
+//GetUnused smartcard from panaccess
 func (card *Smartcard) GetUnused(pan *Panaccess, params *url.Values) ([]Smartcard, error) {
 	//Everything has a limit
 	if (*params).Get("limit") == "" {
@@ -127,6 +134,7 @@ func (card *Smartcard) GetUnused(pan *Panaccess, params *url.Values) ([]Smartcar
 	return ret.Answer, nil
 }
 
+//Unlock smartcard from panaccess
 func (card *Smartcard) Unlock(pan *Panaccess) error {
 	//Params
 	params := url.Values{}
@@ -140,7 +148,7 @@ func (card *Smartcard) Unlock(pan *Panaccess) error {
 		return err
 	}
 	//Decode Response to Struct
-	ret := ApiResponse{}
+	ret := APIResponse{}
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
@@ -155,6 +163,7 @@ func (card *Smartcard) Unlock(pan *Panaccess) error {
 	return nil
 }
 
+//Lock smartcard from panaccess
 func (card *Smartcard) Lock(pan *Panaccess) error {
 	//Params
 	params := url.Values{}
@@ -168,7 +177,7 @@ func (card *Smartcard) Lock(pan *Panaccess) error {
 		return err
 	}
 	//Decode Response to Struct
-	ret := ApiResponse{}
+	ret := APIResponse{}
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err

@@ -6,17 +6,20 @@ import (
 	"net/url"
 )
 
+//GetListOfProductsReponse from panaccess
 type GetListOfProductsReponse struct {
 	Count          int       `json:"count"`
 	ProductEntries []Product `json:"productEntries"`
 }
 
+//Product class representation from panaccess
 type Product struct {
 	ID      int    `json:"productId"`
 	Name    string `json:"name"`
 	Deleted bool   `json:"deleted"`
 }
 
+//Get product from panaccess
 func (prod *Product) Get(pan *Panaccess, params *url.Values) ([]Product, error) {
 	//Everything has a limit
 	if (*params).Get("limit") == "" {
@@ -30,7 +33,7 @@ func (prod *Product) Get(pan *Panaccess, params *url.Values) ([]Product, error) 
 		return nil, err
 	}
 	//Decode Response to Struct
-	ret := ApiResponse{}
+	ret := APIResponse{}
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -49,6 +52,7 @@ func (prod *Product) Get(pan *Panaccess, params *url.Values) ([]Product, error) 
 	return rows.ProductEntries, nil
 }
 
+//GetWithFilter product from panaccess
 func (prod *Product) GetWithFilter(pan *Panaccess, params *url.Values, groupOp string, filters []Rule) ([]Product, error) {
 	//Everything has a limit
 	if (*params).Get("limit") == "" {
@@ -64,7 +68,7 @@ func (prod *Product) GetWithFilter(pan *Panaccess, params *url.Values, groupOp s
 		return nil, err
 	}
 	//Decode Response to Struct
-	ret := ApiResponse{}
+	ret := APIResponse{}
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err

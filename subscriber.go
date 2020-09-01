@@ -8,12 +8,13 @@ import (
 	"net/url"
 )
 
+//GetListOfSubscribersResponse from panaccess
 type GetListOfSubscribersResponse struct {
 	Count             int          `json:"count"`
 	SubscriberEntries []Subscriber `json:"extendedSubscriberEntries"`
 }
 
-//Subscriber representation
+//Subscriber class representation from panaccess
 type Subscriber struct {
 	SubscriberCode string      `json:"subscriberCode"`
 	RegionID       int         `json:"regionId"`
@@ -43,7 +44,7 @@ func (sub *Subscriber) Get(pan *Panaccess, params *url.Values) ([]Subscriber, er
 		return nil, err
 	}
 	//Decode Response to Struct
-	ret := ApiResponse{}
+	ret := APIResponse{}
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -77,7 +78,7 @@ func (sub *Subscriber) Delete(pan *Panaccess) error {
 }
 
 //GetWithFilters a list of subscribers with specific filters
-func (sub *Subscriber) GetWithFilter(pan *Panaccess, params *url.Values, groupOp string, filters []Rule) ([]Subscriber, error) {
+func (sub *Subscriber) GetWithFilters(pan *Panaccess, params *url.Values, groupOp string, filters []Rule) ([]Subscriber, error) {
 	//Everything has a limit
 	if params.Get("limit") == "" {
 		params.Add("limit", "1000")
@@ -93,7 +94,7 @@ func (sub *Subscriber) GetWithFilter(pan *Panaccess, params *url.Values, groupOp
 		return nil, err
 	}
 	//Decode Response to Struct
-	ret := ApiResponse{}
+	ret := APIResponse{}
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -124,7 +125,7 @@ func (sub *Subscriber) GetSmartcards(pan *Panaccess) ([]Smartcard, error) {
 	})
 }
 
-//GetSmartcards of Subscriber
+//GetSmartcardsWithFilter of Subscriber
 func (sub *Subscriber) GetSmartcardsWithFilter(pan *Panaccess, filter []Rule) ([]Smartcard, error) {
 	cards := Smartcard{}
 	filter = append(filter, Rule{
@@ -161,6 +162,7 @@ func (sub *Subscriber) GetOrders(pan *Panaccess, params *url.Values) ([]Order, e
 	return test.Answer, nil
 }
 
+//LockOrder from subscriber at panaccess
 func (sub *Subscriber) LockOrder(pan *Panaccess, order *Order) error {
 	loggedIn, _ := pan.Loggedin()
 	if !loggedIn {
@@ -183,7 +185,7 @@ func (sub *Subscriber) LockOrder(pan *Panaccess, order *Order) error {
 	if err != nil {
 		return err
 	}
-	ret := ApiResponse{}
+	ret := APIResponse{}
 	json.NewDecoder(resp.Body).Decode(&ret)
 	if !ret.Success {
 		return errors.New(ret.ErrorMessage)
@@ -191,6 +193,7 @@ func (sub *Subscriber) LockOrder(pan *Panaccess, order *Order) error {
 	return nil
 }
 
+//UnlockOrder from subscriber at panaccess
 func (sub *Subscriber) UnlockOrder(pan *Panaccess, order *Order) error {
 	loggedIn, _ := pan.Loggedin()
 	if !loggedIn {
@@ -214,7 +217,7 @@ func (sub *Subscriber) UnlockOrder(pan *Panaccess, order *Order) error {
 	if err != nil {
 		return err
 	}
-	ret := ApiResponse{}
+	ret := APIResponse{}
 	json.NewDecoder(resp.Body).Decode(&ret)
 	if !ret.Success {
 		return errors.New(ret.ErrorMessage)

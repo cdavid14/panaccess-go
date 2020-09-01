@@ -9,11 +9,13 @@ import (
 	"sort"
 )
 
+//GetOrdersFilterResponse from panaccess
 type GetOrdersFilterResponse struct {
 	Count        int     `json:"count"`
 	OrderEntries []Order `json:"orderEntries"`
 }
 
+//Order class representation from panaccess
 type Order struct {
 	ID                 int      `json:"orderId"`
 	OrderTime          string   `json:"orderTime,omitempty"`
@@ -28,6 +30,7 @@ type Order struct {
 	DisabledByOperator bool     `json:"disabledByOperator"`
 }
 
+//Get order from panaccess
 func (order *Order) Get(pan *Panaccess, params *url.Values) ([]Order, error) {
 	//Everything has a limit
 	if (*params).Get("limit") == "" {
@@ -41,7 +44,7 @@ func (order *Order) Get(pan *Panaccess, params *url.Values) ([]Order, error) {
 		return nil, err
 	}
 	//Decode Response to Struct
-	ret := ApiResponse{}
+	ret := APIResponse{}
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -60,6 +63,7 @@ func (order *Order) Get(pan *Panaccess, params *url.Values) ([]Order, error) {
 	return rows.OrderEntries, nil
 }
 
+//GetWithFilters order from panaccess
 func (order *Order) GetWithFilters(pan *Panaccess, params *url.Values, groupOp string, filters []Rule) ([]Order, error) {
 	//Everything has a limit
 	if (*params).Get("limit") == "" {
@@ -76,7 +80,7 @@ func (order *Order) GetWithFilters(pan *Panaccess, params *url.Values, groupOp s
 		return nil, err
 	}
 	//Decode Response to Struct
-	ret := ApiResponse{}
+	ret := APIResponse{}
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -95,6 +99,7 @@ func (order *Order) GetWithFilters(pan *Panaccess, params *url.Values, groupOp s
 	return rows.OrderEntries, nil
 }
 
+//AddToSubscriber a order from panaccess
 func (order *Order) AddToSubscriber(pan *Panaccess, params *url.Values) error {
 	//Verify Fields
 	if params.Get("productId") == "" || params.Get("subscriberCode") == "" || params.Get("activationTime") == "" || params.Get("expiryTime") == "" {
@@ -110,7 +115,7 @@ func (order *Order) AddToSubscriber(pan *Panaccess, params *url.Values) error {
 		if err != nil {
 			return err
 		}
-		ret := ApiResponse{}
+		ret := APIResponse{}
 		json.NewDecoder(resp.Body).Decode(&ret)
 		if !ret.Success {
 			return errors.New(ret.ErrorMessage)
@@ -152,7 +157,7 @@ func (order *Order) AddToSubscriber(pan *Panaccess, params *url.Values) error {
 	if err != nil {
 		return err
 	}
-	ret := ApiResponse{}
+	ret := APIResponse{}
 	json.NewDecoder(resp.Body).Decode(&ret)
 	if !ret.Success {
 		return errors.New(ret.ErrorMessage)
@@ -160,6 +165,7 @@ func (order *Order) AddToSubscriber(pan *Panaccess, params *url.Values) error {
 	return nil
 }
 
+//RemoveFromSubscriber order from panaccess
 func (order *Order) RemoveFromSubscriber(pan *Panaccess, sub *Subscriber) error {
 	params := url.Values{}
 	params.Add("orderId", fmt.Sprint(order.ID))
@@ -170,7 +176,7 @@ func (order *Order) RemoveFromSubscriber(pan *Panaccess, sub *Subscriber) error 
 	if err != nil {
 		return err
 	}
-	ret := ApiResponse{}
+	ret := APIResponse{}
 	json.NewDecoder(resp.Body).Decode(&ret)
 	if !ret.Success {
 		return errors.New(ret.ErrorMessage)

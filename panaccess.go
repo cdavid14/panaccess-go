@@ -44,8 +44,8 @@ const (
 	salt = "_panaccess" //appended to password
 )
 
-//ApiResponse marshal JSON output to struct
-type ApiResponse struct {
+//APIResponse marshal JSON output to struct
+type APIResponse struct {
 	Success          bool        `json:"success"`
 	ErrorCode        string      `json:"errorCode,omitempty"`
 	ErrorTag         string      `json:"errorTag,omitempty"`
@@ -55,6 +55,7 @@ type ApiResponse struct {
 	Answer           interface{} `json:"answer,omitempty"`
 }
 
+//LoggedInResponse from panaccess
 type LoggedInResponse struct {
 	Success bool `json:"success"`
 	Answer  bool `json:"answer"`
@@ -84,32 +85,22 @@ func (p *Panaccess) Login() error {
 		return err
 	}
 	//Set SessionID
-	ret := ApiResponse{}
+	ret := APIResponse{}
 	json.NewDecoder(resp.Body).Decode(&ret)
 	p.SessionID = ret.Answer.(string)
 	return nil
 }
 
 //Loggedin in system
-func (pan *Panaccess) Loggedin() (bool, error) {
-	// //Call Panaccess login
-	// form := url.Values{}
-	// resp, err := p.Call("loggedIn", &form)
-	// if err != nil {
-	// 	return false, err
-	// }
-	// //Set SessionID
-	// ret := ApiResponse{}
-	// json.NewDecoder(resp.Body).Decode(&ret)
-	// return ret.Answer.(bool), nil
+func (p *Panaccess) Loggedin() (bool, error) {
 	//Function Call
 	var resp *http.Response
 	var err error
 	serverOk := false
 	params := url.Values{}
-	params.Add("sessionId", pan.SessionID)
-	for _, server := range pan.Servers {
-		resp, err = pan.HTTP.PostForm(
+	params.Add("sessionId", p.SessionID)
+	for _, server := range p.Servers {
+		resp, err = p.HTTP.PostForm(
 			fmt.Sprintf("%s?f=loggedIn&requestMode=function", server),
 			params,
 		)
@@ -122,11 +113,12 @@ func (pan *Panaccess) Loggedin() (bool, error) {
 		return false, errors.New("Connection Timeout")
 	}
 
-	ret := ApiResponse{}
+	ret := APIResponse{}
 	json.NewDecoder(resp.Body).Decode(&ret)
 	return ret.Answer.(bool), nil
 }
 
+//Logout panaccess system
 func (p *Panaccess) Logout() error {
 	//Not logged yet
 	if p.SessionID == "" {
@@ -140,13 +132,14 @@ func (p *Panaccess) Logout() error {
 	return nil
 }
 
-func (pan *Panaccess) Call(funcName string, parameters *url.Values) (*http.Response, error) {
+//Call panaccess function
+func (p *Panaccess) Call(funcName string, parameters *url.Values) (*http.Response, error) {
 	//Prevent ADD SessionID when logging in or if hasn't logged yet
-	if pan.SessionID != "" && funcName != "login" {
-		(*parameters).Add("sessionId", pan.SessionID)
+	if p.SessionID != "" && funcName != "login" {
+		(*parameters).Add("sessionId", p.SessionID)
 	}
 	if funcName != "login" {
-		loggedIn, err := pan.Loggedin()
+		loggedIn, err := p.Loggedin()
 		if err != nil {
 			return nil, err
 		}
@@ -158,8 +151,8 @@ func (pan *Panaccess) Call(funcName string, parameters *url.Values) (*http.Respo
 	var resp *http.Response
 	var err error
 	serverOk := false
-	for _, server := range pan.Servers {
-		resp, err = pan.HTTP.PostForm(
+	for _, server := range p.Servers {
+		resp, err = p.HTTP.PostForm(
 			fmt.Sprintf("%s?f=%s&requestMode=function", server, funcName),
 			(*parameters),
 		)
@@ -174,13 +167,14 @@ func (pan *Panaccess) Call(funcName string, parameters *url.Values) (*http.Respo
 	return resp, nil
 }
 
-func (pan *Panaccess) CallWithFilters(funcName string, parameters *url.Values, filterGroupOP string, filters []Rule) (*http.Response, error) {
+//CallWithFilters panaccess function
+func (p *Panaccess) CallWithFilters(funcName string, parameters *url.Values, filterGroupOP string, filters []Rule) (*http.Response, error) {
 	//Prevent ADD SessionID when logging in or if hasn't logged yet
-	if pan.SessionID != "" && funcName != "login" {
-		(*parameters).Add("sessionId", pan.SessionID)
+	if p.SessionID != "" && funcName != "login" {
+		(*parameters).Add("sessionId", p.SessionID)
 	}
 	if funcName != "login" {
-		loggedIn, err := pan.Loggedin()
+		loggedIn, err := p.Loggedin()
 		if err != nil {
 			return nil, err
 		}
@@ -201,8 +195,8 @@ func (pan *Panaccess) CallWithFilters(funcName string, parameters *url.Values, f
 	//Function Call
 	var resp *http.Response
 	serverOk := false
-	for _, server := range pan.Servers {
-		resp, err = pan.HTTP.PostForm(
+	for _, server := range p.Servers {
+		resp, err = p.HTTP.PostForm(
 			fmt.Sprintf("%s?f=%s&requestMode=function", server, funcName),
 			(*parameters),
 		)
