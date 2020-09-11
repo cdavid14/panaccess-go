@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 )
 
@@ -43,22 +42,15 @@ func (sub *Subscriber) Get(pan *Panaccess, params *url.Values) ([]Subscriber, er
 	if err != nil {
 		return nil, err
 	}
-	//Decode Response to Struct
-	ret := APIResponse{}
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(bodyBytes, &ret)
-	if err != nil {
-		return nil, err
-	}
 	//Retrieve all rows and parse as a slice of Subscriber
 	var rows GetListOfSubscribersResponse
-	bodyBytes, err = json.Marshal(ret.Answer)
+	bodyBytes, err := json.Marshal(resp.Answer)
 	err = json.Unmarshal(bodyBytes, &rows)
 	if err != nil {
 		return nil, err
+	}
+	if !resp.Success {
+		return nil, errors.New(resp.ErrorMessage)
 	}
 	return rows.SubscriberEntries, nil
 }
@@ -68,11 +60,14 @@ func (sub *Subscriber) Delete(pan *Panaccess) error {
 	params := url.Values{}
 	params.Add("code", sub.SubscriberCode)
 	//Call Function
-	_, err := pan.Call(
+	resp, err := pan.Call(
 		"deleteSubscriber",
 		&params)
 	if err != nil {
 		return err
+	}
+	if !resp.Success {
+		return errors.New(resp.ErrorMessage)
 	}
 	return nil
 }
@@ -93,19 +88,12 @@ func (sub *Subscriber) GetWithFilters(pan *Panaccess, params *url.Values, groupO
 	if err != nil {
 		return nil, err
 	}
-	//Decode Response to Struct
-	ret := APIResponse{}
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(bodyBytes, &ret)
-	if err != nil {
-		return nil, err
-	}
 	//Retrieve all rows and parse as a slice of Subscriber
 	var rows GetListOfSubscribersResponse
-	bodyBytes, err = json.Marshal(ret.Answer)
+	bodyBytes, err := json.Marshal(resp.Answer)
+	if err != nil {
+		return nil, err
+	}
 	err = json.Unmarshal(bodyBytes, &rows)
 	if err != nil {
 		return nil, err
@@ -150,16 +138,16 @@ func (sub *Subscriber) GetOrders(pan *Panaccess, params *url.Values) ([]Order, e
 	if err != nil {
 		return nil, err
 	}
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	var ordersResponse GetSmartcardOrdersResponse
+	bodyBytes, err := json.Marshal(resp.Answer)
 	if err != nil {
 		return nil, err
 	}
-	test := GetSmartcardOrdersResponse{}
-	err = json.Unmarshal(bodyBytes, &test)
+	err = json.Unmarshal(bodyBytes, &ordersResponse)
 	if err != nil {
 		return nil, err
 	}
-	return test.Answer, nil
+	return ordersResponse.Answer, nil
 }
 
 //LockOrder from subscriber at panaccess
@@ -185,10 +173,8 @@ func (sub *Subscriber) LockOrder(pan *Panaccess, order *Order) error {
 	if err != nil {
 		return err
 	}
-	ret := APIResponse{}
-	json.NewDecoder(resp.Body).Decode(&ret)
-	if !ret.Success {
-		return errors.New(ret.ErrorMessage)
+	if !resp.Success {
+		return errors.New(resp.ErrorMessage)
 	}
 	return nil
 }
@@ -217,10 +203,8 @@ func (sub *Subscriber) UnlockOrder(pan *Panaccess, order *Order) error {
 	if err != nil {
 		return err
 	}
-	ret := APIResponse{}
-	json.NewDecoder(resp.Body).Decode(&ret)
-	if !ret.Success {
-		return errors.New(ret.ErrorMessage)
+	if !resp.Success {
+		return errors.New(resp.ErrorMessage)
 	}
 	return nil
 }

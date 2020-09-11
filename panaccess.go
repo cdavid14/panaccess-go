@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 )
@@ -13,8 +14,8 @@ import (
 //Panaccess credentials to login
 type Panaccess struct {
 	Servers   []string
-	Usuario   string
-	Senha     string
+	User      string
+	Password  string
 	Token     string
 	SessionID string
 	HTTP      *http.Client
@@ -70,24 +71,22 @@ type KeyValuePair struct {
 //Login in system
 func (p *Panaccess) Login() error {
 	//Add password salt
-	p.Senha += salt
+	p.Password += salt
 	//Encrypt password with MD5
 	hasher := md5.New()
-	hasher.Write([]byte(p.Senha))
-	p.Senha = hex.EncodeToString(hasher.Sum(nil))
+	hasher.Write([]byte(p.Password))
+	p.Password = hex.EncodeToString(hasher.Sum(nil))
 	//Call Panaccess login
 	form := url.Values{}
 	form.Add("apiToken", p.Token)
-	form.Add("username", p.Usuario)
-	form.Add("password", p.Senha)
+	form.Add("username", p.User)
+	form.Add("password", p.Password)
 	resp, err := p.Call("login", &form)
 	if err != nil {
 		return err
 	}
 	//Set SessionID
-	ret := APIResponse{}
-	json.NewDecoder(resp.Body).Decode(&ret)
-	p.SessionID = ret.Answer.(string)
+	p.SessionID = resp.Answer.(string)
 	return nil
 }
 
@@ -114,7 +113,10 @@ func (p *Panaccess) Loggedin() (bool, error) {
 	}
 
 	ret := APIResponse{}
-	json.NewDecoder(resp.Body).Decode(&ret)
+	err = json.NewDecoder(resp.Body).Decode(&ret)
+	if err != nil {
+		return false, err
+	}
 	return ret.Answer.(bool), nil
 }
 
@@ -133,19 +135,10 @@ func (p *Panaccess) Logout() error {
 }
 
 //Call panaccess function
-func (p *Panaccess) Call(funcName string, parameters *url.Values) (*http.Response, error) {
+func (p *Panaccess) Call(funcName string, parameters *url.Values) (*APIResponse, error) {
 	//Prevent ADD SessionID when logging in or if hasn't logged yet
 	if p.SessionID != "" && funcName != "login" {
 		(*parameters).Add("sessionId", p.SessionID)
-	}
-	if funcName != "login" {
-		loggedIn, err := p.Loggedin()
-		if err != nil {
-			return nil, err
-		}
-		if !loggedIn {
-			return nil, errors.New("Not logged-in")
-		}
 	}
 	//Function Call
 	var resp *http.Response
@@ -162,25 +155,48 @@ func (p *Panaccess) Call(funcName string, parameters *url.Values) (*http.Respons
 		}
 	}
 	if !serverOk {
-		return resp, errors.New("Connection Timeout")
+		return nil, errors.New("Connection Timeout")
 	}
-	return resp, nil
+	//Decode response to struct
+	apiResponse := APIResponse{}
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(bodyBytes, &apiResponse)
+	if err != nil {
+		return nil, err
+	}
+	//Verify if the response has generated errors
+	if apiResponse.ErrorCode != "" {
+		//Ignore login function
+		if funcName != "login" {
+			//Check if user is logged-in
+			loggedIn, err := p.Loggedin()
+			if err != nil {
+				return nil, err
+			}
+			//If not
+			if !loggedIn {
+				//Do login again
+				err = p.Login()
+				if err != nil {
+					return nil, err
+				}
+				//Call function again
+				return p.Call(funcName, parameters)
+			}
+			return nil, errors.New(apiResponse.ErrorCode)
+		}
+	}
+	return &apiResponse, nil
 }
 
 //CallWithFilters panaccess function
-func (p *Panaccess) CallWithFilters(funcName string, parameters *url.Values, filterGroupOP string, filters []Rule) (*http.Response, error) {
+func (p *Panaccess) CallWithFilters(funcName string, parameters *url.Values, filterGroupOP string, filters []Rule) (*APIResponse, error) {
 	//Prevent ADD SessionID when logging in or if hasn't logged yet
 	if p.SessionID != "" && funcName != "login" {
 		(*parameters).Add("sessionId", p.SessionID)
-	}
-	if funcName != "login" {
-		loggedIn, err := p.Loggedin()
-		if err != nil {
-			return nil, err
-		}
-		if !loggedIn {
-			return nil, errors.New("Not logged-in")
-		}
 	}
 	//Filters generator
 	filter := Filters{
@@ -208,5 +224,38 @@ func (p *Panaccess) CallWithFilters(funcName string, parameters *url.Values, fil
 	if !serverOk {
 		return nil, errors.New("Connection Timeout")
 	}
-	return resp, nil
+	//Decode response to struct
+	apiResponse := APIResponse{}
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(bodyBytes, &apiResponse)
+	if err != nil {
+		return nil, err
+	}
+	//Verify if the response has generated errors
+	if apiResponse.ErrorCode != "" {
+		//Ignore login function
+		if funcName != "login" {
+			//Check if user is logged-in
+			loggedIn, err := p.Loggedin()
+			if err != nil {
+				return nil, err
+			}
+			//If not
+			if !loggedIn {
+				//Do login again
+				err = p.Login()
+				if err != nil {
+					return nil, err
+				}
+				//Call function again
+				return p.Call(funcName, parameters)
+			} else {
+				return nil, errors.New(apiResponse.ErrorCode)
+			}
+		}
+	}
+	return &apiResponse, nil
 }

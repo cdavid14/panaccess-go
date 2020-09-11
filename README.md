@@ -15,6 +15,8 @@
 ## Table of contents
 
 - [Status](#status)
+- [Good Practices](#good-practices)
+- [Example Code](#example-code)
 - [Bugs and feature requests](#bugs-and-feature-requests)
 - [Contributing](#contributing)
 - [Creators](#creators)
@@ -26,6 +28,66 @@
 - Tests implement
 - A logo for the repository
 
+## Good practices
+
+- Requests are expensives for panaccess, so try to make only the necessaries requests, if you don't need to deal with variable data, try to maintain a local cache,a request example:
+```
+login
+getSmartcards?
+ERROR!
+loggedIn?
+yes!
+return ERROR
+```
+And
+```
+login
+getSmartcards?
+ERROR!
+loggedIn?
+NO!
+login
+getSmartcards?
+return smartcards or ERROR
+```
+
+## Example code
+
+```golang
+package main
+
+import (
+	"log"
+	"net/http"
+	"net/url"
+	"time"
+	"github.com/cdavid14/panaccess-go"
+)
+
+func main() {
+  pan := panaccess.Panaccess{
+		Servers:  []string{"https://cv01.panaccess.com", "https://cv01a.panaccess.com", "https://cv01b.panaccess.com"},
+		User:     "demo",
+		Password: "demo2010",
+		Token:    "nziyNTEQsBbwvRWxLXzo",
+		HTTP:     &http.Client{Timeout: time.Duration(30) * time.Second},
+	}
+	err := pan.Login()
+	if err != nil {
+		log.Fatalf("Panaccess login incorrect or servers not available: %v", err)
+  }
+  
+  subObj := panaccess.Subscriber{}
+  params := url.Values{}
+	
+	params.Add("limit", "1000")
+	subs, err := subObj.Get(&pan, &params)
+	if err != nil {
+		log.Fatalf("Failed Get subs: %v", err)
+  }
+  ...
+}
+```
 ## Bugs and feature requests
 
 Have a bug or a feature request? Please first read the [issue guidelines](https://github.com/cdavid14/blob/master/CONTRIBUTING.md) and search for existing and closed issues. If your problem or idea is not addressed yet, [please open a new issue](https://github.com/cdavid14/issues/new).

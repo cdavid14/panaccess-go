@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"sort"
 )
@@ -43,22 +42,18 @@ func (order *Order) Get(pan *Panaccess, params *url.Values) ([]Order, error) {
 	if err != nil {
 		return nil, err
 	}
-	//Decode Response to Struct
-	ret := APIResponse{}
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(bodyBytes, &ret)
-	if err != nil {
-		return nil, err
-	}
 	//Retrieve all rows and parse as a slice of Subscriber
 	var rows GetOrdersFilterResponse
-	bodyBytes, err = json.Marshal(ret.Answer)
+	bodyBytes, err := json.Marshal(resp.Answer)
+	if err != nil {
+		return nil, err
+	}
 	err = json.Unmarshal(bodyBytes, &rows)
 	if err != nil {
 		return nil, err
+	}
+	if !resp.Success {
+		return nil, errors.New(resp.ErrorMessage)
 	}
 	return rows.OrderEntries, nil
 }
@@ -79,22 +74,18 @@ func (order *Order) GetWithFilters(pan *Panaccess, params *url.Values, groupOp s
 	if err != nil {
 		return nil, err
 	}
-	//Decode Response to Struct
-	ret := APIResponse{}
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(bodyBytes, &ret)
-	if err != nil {
-		return nil, err
-	}
 	//Retrieve all rows and parse as a slice of Subscriber
 	var rows GetOrdersFilterResponse
-	bodyBytes, err = json.Marshal(ret.Answer)
+	bodyBytes, err := json.Marshal(resp.Answer)
+	if err != nil {
+		return nil, err
+	}
 	err = json.Unmarshal(bodyBytes, &rows)
 	if err != nil {
 		return nil, err
+	}
+	if !resp.Success {
+		return nil, errors.New(resp.ErrorMessage)
 	}
 	return rows.OrderEntries, nil
 }
@@ -115,10 +106,8 @@ func (order *Order) AddToSubscriber(pan *Panaccess, params *url.Values) error {
 		if err != nil {
 			return err
 		}
-		ret := APIResponse{}
-		json.NewDecoder(resp.Body).Decode(&ret)
-		if !ret.Success {
-			return errors.New(ret.ErrorMessage)
+		if !resp.Success {
+			return errors.New(resp.ErrorMessage)
 		}
 	}
 	//Get Subscriber smartcards
@@ -157,10 +146,8 @@ func (order *Order) AddToSubscriber(pan *Panaccess, params *url.Values) error {
 	if err != nil {
 		return err
 	}
-	ret := APIResponse{}
-	json.NewDecoder(resp.Body).Decode(&ret)
-	if !ret.Success {
-		return errors.New(ret.ErrorMessage)
+	if !resp.Success {
+		return errors.New(resp.ErrorMessage)
 	}
 	return nil
 }
@@ -176,10 +163,8 @@ func (order *Order) RemoveFromSubscriber(pan *Panaccess, sub *Subscriber) error 
 	if err != nil {
 		return err
 	}
-	ret := APIResponse{}
-	json.NewDecoder(resp.Body).Decode(&ret)
-	if !ret.Success {
-		return errors.New(ret.ErrorMessage)
+	if !resp.Success {
+		return errors.New(resp.ErrorMessage)
 	}
 	return nil
 }

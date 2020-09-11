@@ -2,7 +2,7 @@ package panaccess
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"errors"
 	"net/url"
 )
 
@@ -32,22 +32,15 @@ func (prod *Product) Get(pan *Panaccess, params *url.Values) ([]Product, error) 
 	if err != nil {
 		return nil, err
 	}
-	//Decode Response to Struct
-	ret := APIResponse{}
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(bodyBytes, &ret)
-	if err != nil {
-		return nil, err
-	}
 	//Retrieve all rows and parse as a slice of Subscriber
 	var rows GetListOfProductsReponse
-	bodyBytes, err = json.Marshal(ret.Answer)
+	bodyBytes, err := json.Marshal(resp.Answer)
 	err = json.Unmarshal(bodyBytes, &rows)
 	if err != nil {
 		return nil, err
+	}
+	if !resp.Success {
+		return nil, errors.New(resp.ErrorMessage)
 	}
 	return rows.ProductEntries, nil
 }
@@ -67,22 +60,15 @@ func (prod *Product) GetWithFilter(pan *Panaccess, params *url.Values, groupOp s
 	if err != nil {
 		return nil, err
 	}
-	//Decode Response to Struct
-	ret := APIResponse{}
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(bodyBytes, &ret)
-	if err != nil {
-		return nil, err
-	}
 	//Retrieve all rows and parse as a slice of Subscriber
 	var rows GetListOfProductsReponse
-	bodyBytes, err = json.Marshal(ret.Answer)
+	bodyBytes, err := json.Marshal(resp.Answer)
 	err = json.Unmarshal(bodyBytes, &rows)
 	if err != nil {
 		return nil, err
+	}
+	if !resp.Success {
+		return nil, errors.New(resp.ErrorMessage)
 	}
 	return rows.ProductEntries, nil
 }
