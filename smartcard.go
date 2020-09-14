@@ -20,14 +20,14 @@ type GetUnusedSmartcardsResponse struct {
 
 //Smartcard class representation from panaccess
 type Smartcard struct {
-	SN          string   `json:"sn"`
-	PIN         string   `json:"pin"`
+	SN          string   `json:"sn,omitempty"`
+	PIN         string   `json:"pin,omitempty"`
 	Checksum    string   `json:"checksum,omitempty"`
-	HCID        string   `json:"hcId"`
-	Disabled    bool     `json:"disabled"`
-	Defect      bool     `json:"defect"`
-	Blacklisted bool     `json:"blacklisted"`
-	Products    []string `json:"products"`
+	HCID        string   `json:"hcId,omitempty"`
+	Disabled    bool     `json:"disabled,omitempty"`
+	Defect      bool     `json:"defect,omitempty"`
+	Blacklisted bool     `json:"blacklisted,omitempty"`
+	Products    []string `json:"products,omitempty"`
 }
 
 //GetSmartcardOrdersResponse from panaccess
@@ -109,10 +109,10 @@ func (card *Smartcard) GetUnused(pan *Panaccess, params *url.Values) ([]Smartcar
 	if !resp.Success {
 		return nil, errors.New(resp.ErrorMessage)
 	}
-	var rows GetUnusedSmartcardsResponse
+	var rows []Smartcard
 	bodyBytes, err := json.Marshal(resp.Answer)
 	err = json.Unmarshal(bodyBytes, &rows)
-	return rows.Answer, nil
+	return rows, nil
 }
 
 //Unlock smartcard from panaccess
