@@ -20,14 +20,15 @@ type GetUnusedSmartcardsResponse struct {
 
 //Smartcard class representation from panaccess
 type Smartcard struct {
-	SN          string   `json:"sn,omitempty"`
-	PIN         string   `json:"pin,omitempty"`
-	Checksum    string   `json:"checksum,omitempty"`
-	HCID        string   `json:"hcId,omitempty"`
-	Disabled    bool     `json:"disabled,omitempty"`
-	Defect      bool     `json:"defect,omitempty"`
-	Blacklisted bool     `json:"blacklisted,omitempty"`
-	Products    []string `json:"products,omitempty"`
+	SN             string   `json:"sn,omitempty"`
+	PIN            string   `json:"pin,omitempty"`
+	Checksum       string   `json:"checksum,omitempty"`
+	SubscriberCode string   `json:"subscriberCode,omitempty"`
+	HCID           string   `json:"hcId,omitempty"`
+	Disabled       bool     `json:"disabled,omitempty"`
+	Defect         bool     `json:"defect,omitempty"`
+	Blacklisted    bool     `json:"blacklisted,omitempty"`
+	Products       []string `json:"products,omitempty"`
 }
 
 //Smartcards array of smartcard
