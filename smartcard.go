@@ -30,6 +30,9 @@ type Smartcard struct {
 	Products    []string `json:"products,omitempty"`
 }
 
+//Smartcards array of smartcard
+type Smartcards []Smartcard
+
 //GetSmartcardOrdersResponse from panaccess
 type GetSmartcardOrdersResponse struct {
 	Success bool    `json:"success"`
@@ -109,7 +112,7 @@ func (card *Smartcard) GetUnused(pan *Panaccess, params *url.Values) ([]Smartcar
 	if !resp.Success {
 		return nil, errors.New(resp.ErrorMessage)
 	}
-	var rows []Smartcard
+	var rows Smartcards
 	bodyBytes, err := json.Marshal(resp.Answer)
 	err = json.Unmarshal(bodyBytes, &rows)
 	return rows, nil
