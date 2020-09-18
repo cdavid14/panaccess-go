@@ -107,7 +107,7 @@ func (sub *Subscriber) GetSmartcards(pan *Panaccess) ([]Smartcard, error) {
 	return cards.GetWithFilter(pan, &url.Values{}, "AND", []Rule{
 		{
 			Field: "subscriberCode",
-			OP:    "cn",
+			OP:    "eq",
 			Data:  sub.SubscriberCode,
 		},
 	})
@@ -138,27 +138,21 @@ func (sub *Subscriber) GetOrders(pan *Panaccess, params *url.Values) ([]Order, e
 	if err != nil {
 		return nil, err
 	}
-	var ordersResponse GetSmartcardOrdersResponse
-	bodyBytes, err := json.Marshal(resp.Answer)
+	var ordersResponse []Order
+	bodyBytes, err := json.MarshalIndent(resp.Answer, "", "  ")
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(string(bodyBytes))
 	err = json.Unmarshal(bodyBytes, &ordersResponse)
 	if err != nil {
 		return nil, err
 	}
-	return ordersResponse.Answer, nil
+	return ordersResponse, nil
 }
 
 //LockOrder from subscriber at panaccess
 func (sub *Subscriber) LockOrder(pan *Panaccess, order *Order) error {
-	loggedIn, _ := pan.Loggedin()
-	if !loggedIn {
-		err := pan.Login()
-		if err != nil {
-			return err
-		}
-	}
 	//Verify Fields
 	if order == nil {
 		return errors.New("Please fill all required fields")

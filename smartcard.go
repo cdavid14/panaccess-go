@@ -3,8 +3,44 @@ package panaccess
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 )
+
+//Smartcard class representation from panaccess
+type Smartcard struct {
+	Alias                   string   `json:"alias"`
+	Blacklisted             bool     `json:"blacklisted"`
+	CamlibVersion           string   `json:"camlibVersion"`
+	CasIDs                  string   `json:"casIds"`
+	ConfigID                string   `json:"configId"`
+	ConfigProtected         bool     `json:"configProtected"`
+	Defect                  bool     `json:"defect"`
+	Disabled                bool     `json:"disabled"`
+	FirmwareVersion         string   `json:"firmwareVersion"`
+	FirstName               string   `json:"firstName"`
+	HCID                    string   `json:"hcId"`
+	LastActivation          string   `json:"lastActivation"`
+	LastName                string   `json:"lastName"`
+	LastServiceListDownload string   `json:"lastServiceListDownload"`
+	MAC                     string   `json:"mac"`
+	MasterSN                string   `json:"masterSn"`
+	PackageNames            []string `json:"packageNames"`
+	Packages                []int    `json:"packages"`
+	PairedBox               string   `json:"pairedBox"`
+	PIN                     string   `json:"pin"`
+	Products                []string `json:"products"`
+	RegionID                int      `json:"regionId"`
+	RegionName              string   `json:"regionName"`
+	SN                      string   `json:"sn"`
+	STBChipset              string   `json:"stbChipset"`
+	STBModel                string   `json:"stbModel"`
+	STBVendor               string   `json:"stbVendor"`
+	SubscriberCode          string   `json:"subscriberCode"`
+}
+
+//Smartcards array of smartcard
+type Smartcards []Smartcard
 
 //GetListOfSmartcardsResponse from panaccess
 type GetListOfSmartcardsResponse struct {
@@ -17,22 +53,6 @@ type GetUnusedSmartcardsResponse struct {
 	Success bool        `json:"success"`
 	Answer  []Smartcard `json:"answer"`
 }
-
-//Smartcard class representation from panaccess
-type Smartcard struct {
-	SN             string   `json:"sn,omitempty"`
-	PIN            string   `json:"pin,omitempty"`
-	Checksum       string   `json:"checksum,omitempty"`
-	SubscriberCode string   `json:"subscriberCode,omitempty"`
-	HCID           string   `json:"hcId,omitempty"`
-	Disabled       bool     `json:"disabled,omitempty"`
-	Defect         bool     `json:"defect,omitempty"`
-	Blacklisted    bool     `json:"blacklisted,omitempty"`
-	Products       []string `json:"products,omitempty"`
-}
-
-//Smartcards array of smartcard
-type Smartcards []Smartcard
 
 //GetSmartcardOrdersResponse from panaccess
 type GetSmartcardOrdersResponse struct {
@@ -55,7 +75,7 @@ func (card *Smartcard) Get(pan *Panaccess, params *url.Values) ([]Smartcard, err
 		return nil, err
 	}
 	//Retrieve all rows and parse as a slice of Subscriber
-	var rows GetListOfSmartcardsResponse
+	rows := GetListOfSmartcardsResponse{}
 	bodyBytes, err := json.Marshal(resp.Answer)
 	err = json.Unmarshal(bodyBytes, &rows)
 	if err != nil {
@@ -85,8 +105,8 @@ func (card *Smartcard) GetWithFilter(pan *Panaccess, params *url.Values, groupOp
 	}
 	//Retrieve all rows and parse as a slice of Subscriber
 	var rows GetListOfSmartcardsResponse
-	bodyBytes, err := json.Marshal(resp.Answer)
-	err = json.Unmarshal(bodyBytes, &rows)
+	jsonBody, err := json.Marshal(resp.Answer)
+	err = json.Unmarshal(jsonBody, &rows)
 	if err != nil {
 		return nil, err
 	}
@@ -115,6 +135,7 @@ func (card *Smartcard) GetUnused(pan *Panaccess, params *url.Values) ([]Smartcar
 	}
 	var rows Smartcards
 	bodyBytes, err := json.Marshal(resp.Answer)
+	fmt.Println(string(bodyBytes))
 	err = json.Unmarshal(bodyBytes, &rows)
 	return rows, nil
 }

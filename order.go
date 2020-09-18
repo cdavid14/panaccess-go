@@ -8,25 +8,30 @@ import (
 	"sort"
 )
 
+//Order class representation from panaccess
+type Order struct {
+	ActivationTime string   `json:"activationTime"`
+	Alias          string   `json:"alias"`
+	SubscriberCode string   `json:"code"`
+	Created        string   `json:"created"`
+	ExpiryTime     string   `json:"expiryTime"`
+	FirstName      string   `json:"firstName"`
+	LastName       string   `json:"lastName"`
+	Modified       string   `json:"modified"`
+	ID             int      `json:"orderId"`
+	OrderTime      string   `json:"orderTime"`
+	ProductID      int      `json:"productId"`
+	ProductName    string   `json:"productName"`
+	ScDefect       bool     `json:"scDefect"`
+	ScDisabled     bool     `json:"scDisabled"`
+	Smartcards     []string `json:"smartcards"`
+	SN             string   `json:"sn"`
+}
+
 //GetOrdersFilterResponse from panaccess
 type GetOrdersFilterResponse struct {
 	Count        int     `json:"count"`
 	OrderEntries []Order `json:"orderEntries"`
-}
-
-//Order class representation from panaccess
-type Order struct {
-	ID                 int      `json:"orderId"`
-	OrderTime          string   `json:"orderTime,omitempty"`
-	ProductID          int      `json:"productId,omitempty"`
-	ProductName        string   `json:"productName,omitempty"`
-	ActivationTime     string   `json:"activationTime"`
-	SubscriberCode     int      `json:"code,omitempty"`
-	ExpiryTime         string   `json:"expiryTime"`
-	Smartcards         []string `json:"smartcards"`
-	Disabled           bool     `json:"disabled"`
-	DisabledBySystem   bool     `json:"disabledBySystem"`
-	DisabledByOperator bool     `json:"disabledByOperator"`
 }
 
 //Get order from panaccess
@@ -76,7 +81,7 @@ func (order *Order) GetWithFilters(pan *Panaccess, params *url.Values, groupOp s
 	}
 	//Retrieve all rows and parse as a slice of Subscriber
 	var rows GetOrdersFilterResponse
-	bodyBytes, err := json.Marshal(resp.Answer)
+	bodyBytes, err := json.MarshalIndent(resp.Answer, "", "  ")
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +163,7 @@ func (order *Order) RemoveFromSubscriber(pan *Panaccess, sub *Subscriber) error 
 	params.Add("orderId", fmt.Sprint(order.ID))
 	params.Add("subscriberCode", sub.SubscriberCode)
 	resp, err := pan.Call(
-		"cancelOrderOfSubscriber",
+		"terminateOrderOfSubscriber",
 		&params)
 	if err != nil {
 		return err
