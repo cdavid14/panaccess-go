@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
+	"strings"
 )
 
 //Order class representation from panaccess
@@ -139,12 +140,22 @@ func (order *Order) AddToSubscriber(pan *Panaccess, params *url.Values) error {
 		return errors.New("ProductId not found")
 	}
 	//Add card to product if hasn't
+	fmt.Printf("Cards: %v\n", cards)
 	for _, card := range cards {
-		if sort.SearchStrings(card.Products, prods[0].Name) == len(card.Products) {
-			params.Add("smartcards", card.SN)
+		fmt.Printf("Products: %v | Name: %v\n", card.Products, prods[0].Name)
+		fmt.Printf("Len1: %v | Len2: %v\n", sort.SearchStrings(card.Products, prods[0].Name), len(card.Products))
+		found := false
+		for _, v := range card.Products {
+			if strings.Compare(v, prods[0].Name) == 0 {
+				found = true
+			}
+		}
+		if !found {
+			(*params).Add("smartcards[]", card.SN)
 		}
 	}
 	//Send data to make new subscriber
+	fmt.Println(*params)
 	resp, err := pan.Call(
 		"addFlexibleOrderToSubscriber",
 		params)
