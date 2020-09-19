@@ -114,6 +114,7 @@ func (p *Panaccess) Loggedin() (bool, error) {
 
 	ret := APIResponse{}
 	err = json.NewDecoder(resp.Body).Decode(&ret)
+	defer resp.Body.Close()
 	if err != nil {
 		return false, err
 	}
@@ -160,6 +161,7 @@ func (p *Panaccess) Call(funcName string, parameters *url.Values) (*APIResponse,
 	//Decode response to struct
 	apiResponse := APIResponse{}
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -227,6 +229,7 @@ func (p *Panaccess) CallWithFilters(funcName string, parameters *url.Values, fil
 	//Decode response to struct
 	apiResponse := APIResponse{}
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
